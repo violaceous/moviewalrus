@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="jquery.js"></script>
+    <script>
+      function getsomething() {
+      var serverURL = "http://localhost:7474/db/data"
+      $.ajax({
+      type:"POST",
+      url: serverURL + "/transaction/commit",
+      accept: "application/json; charset=UTF-8",
+      contentType:"application/json",
+      headers: { 
+      "X-Stream": "true"    
+      },
+      data: JSON.stringify({
+
+  "statements" : [ {
+    "statement" : "CREATE (n) RETURN id(n)"
+  } ]
+
+      }),
+      success: function(data, textStatus, jqXHR){
+      alert("success:" + textStatus);
+      },
+      error: function(jqXHR, textStatus, errorThrown){
+      alert(errorThrown);
+      console.log("error:" + textStatus);
+      }
+      });//end of ajax
+      } //end of getSomething()
+      getsomething();
+
+
+
+    </script>
+  </head>
+  <body>
+
+    Text and balls
+
+
+
+  </body>
+</html>
