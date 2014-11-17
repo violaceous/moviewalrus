@@ -18,10 +18,15 @@ def saveMovie(movieid, link):
     session = cypher.Session("http://localhost:7474")
     tx = session.create_transaction()
     # would look better to do it propper like with the variables instead of a string
-    tx.append("CREATE (MOVIE {amazon_link:'" + link + "',amazon_id:'" + movieid + "'})")
+    tx.append("CREATE (movie:MOVIE {amazon_link:'" + link + "',amazon_id:'" + movieid + "'})")
     tx.commit()
 
-output = subprocess.check_output(['proxychains','casperjs','movies.js'])
-print output
+f = open('someMovies.txt', 'r')
+output = f.read()
 splitLinks(output)
+
+
+#output = subprocess.check_output(['proxychains','casperjs','movies.js'])
+#print output
+#splitLinks(output)
 
