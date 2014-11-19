@@ -17,9 +17,13 @@ def processLink(link):
 def saveMovie(movieid, link):
     session = cypher.Session("http://localhost:7474")
     tx = session.create_transaction()
-    # would look better to do it propper like with the variables instead of a string
-    tx.append("CREATE (movie:MOVIE {amazon_link:'" + link + "',amazon_id:'" + movieid + "'})")
-    tx.commit()
+    try:
+        # would look better to do it propper like with the variables instead of a string
+        tx.append("CREATE (movie:MOVIE {amazon_link:'" + link + "',amazon_id:'" + movieid + "'})")
+        tx.commit()
+    except cypher.TransactionError:
+        # movie already existed and couldn't be created again. All is well, fail silently.
+        bob = 1
 
 f = open('someMovies.txt', 'r')
 output = f.read()
@@ -30,3 +34,4 @@ splitLinks(output)
 #print output
 #splitLinks(output)
 
+ 
