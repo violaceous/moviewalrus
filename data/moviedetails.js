@@ -80,9 +80,7 @@ function getGenres() {
 }
 
 function getDetails() {
-    hidden = casper.evaluate(undetected);
-    if(hidden) {
-	casper.echo('image: ' + hidden);
+
 	title = casper.evaluate(getTitle);
 	year = casper.evaluate(getYear);
 	rating = casper.evaluate(getRating);
@@ -92,10 +90,7 @@ function getDetails() {
 
 	casper.echo('#' + title + '#,#' + year + '#,#' + rating + '#,#' + length + '#,#' + description + '#,#' + imageLink + "#"); 
 
-    }
-    else {
-	casper.echo('we got caaaaught' + hidden);
-    }
+
 }
 
 casper.start('www.google.com', function() {
