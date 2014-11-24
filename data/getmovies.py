@@ -24,14 +24,15 @@ def saveMovie(movieid, link):
     except cypher.TransactionError:
         # movie already existed and couldn't be created again. All is well, fail silently.
         bob = 1
-
-f = open('someMovies.txt', 'r')
-output = f.read()
-splitLinks(output)
-
-
-#output = subprocess.check_output(['proxychains','casperjs','movies.js'])
+#
+#f = open('someMovies.txt', 'r')
+#output = f.read()
 #print output
 #splitLinks(output)
+
+
+output = subprocess.check_output(['proxychains','casperjs','movies.js'])
+# print output
+splitLinks(output)
 
  

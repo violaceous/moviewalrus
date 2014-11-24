@@ -1,12 +1,14 @@
-var delay = 10000; // timeout between pages
+var delay = 6000; // timeout between pages
 var links = [];
 //var url = 'http://smile.amazon.com/s/ref=s9_hps_bw_clnk_a_v?node=2858778011,7613704011&search-alias=prime-instant-video&sort=csrank&pf_rd_m=ATVPDKIKX0DER&pf_rd_s=center-6&pf_rd_r=03D83JJV25XQ8CDPQVCW&pf_rd_t=101&pf_rd_p=1959989462&pf_rd_i=2858778011&pf_rd_p=1959989462&pf_rd_s=center-10&pf_rd_t=101&pf_rd_i=2858778011&pf_rd_m=ATVPDKIKX0DER&pf_rd_r=03D83JJV25XQ8CDPQVCW';
 var url = 'http://smile.amazon.com/s/ref=sr_st_date-desc-rank?qid=1416059713&rh=n%3A7589478011%2Cn%3A7589479011&sort=date-desc-rank';
+var fs = require('fs');
+var pages = "";
 
 
 
 var casper = require('casper').create();
-var maxLoops = 1; // used to limit number of repeats for testing the script
+var maxLoops = 10000; // used to limit number of repeats for testing the script
 
 casper.userAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.111 Safari/537.36');
 
@@ -20,12 +22,12 @@ function getLinks() {
 function getMoviesAndWrite(){
     casper.echo('in getMovies');
 
-    /*
+    
      var js = casper.evaluate(function() {
      return document; 
      });	
-     casper.echo(js.all[0].outerHTML); 
-     */
+     pages = pages + js.all[0].outerHTML; 
+    
 
     links = casper.evaluate(getLinks);
     links = links.join("\n");
@@ -35,13 +37,14 @@ function getMoviesAndWrite(){
 
     if (casper.visible(nextLink) && maxLoops > 0) {
 	maxLoops = maxLoops - 1;
-	casper.wait(delay, function() {
+	casper.wait('6000', function() {
 	    casper.thenClick(nextLink);
 	    casper.wait(10000, function() {
 		casper.then(getMoviesAndWrite);
 	    });
 	});
     } else {
+	// fs.write('pagehtml.txt',pages,'w');
     }
 }
 

@@ -92,43 +92,50 @@ def mainThread():
             movieid = nextMovies[i].values[1]
             print "starting the processing for process " + url
 
-            if processes[i]['movie'] is None:
+            if processes[i]['movie']['process'] is None:
                 print 'starting processing of ' + url
-                processes[i]['movie'] = startScrapeMovie(url)
+                processes[i]['movie']['process'] = startScrapeMovie(url)
+                processes[i]['movie']['id'] = movieid
+                processes[i]['movie']['url'] = url
+                processes[i]['ratings']['id'] = movieid
+                processes[i]['ratings']['url'] = url.replace('/dp/', '/product-reviews/')
 
-            elif processes[i]['movie'].poll() is not None:
-                if processes[i]['ratings'] is None:
-                    # I should move this to when ratings are back too so it only saves with ratings
-                    output = processes[i]['movie'].communicate()[0]
+            elif processes[i]['movie']['process'].poll() is not None:
+                if processes[i]['ratings']['process'] is None:
+                    processes[i]['ratings']['process'] = startScrapeRatings(processes[i]['ratings']['url'])
+
+                elif processes[i]['ratings']['process'].poll() is not None:
+                    output = processes[i]['movie']['process'].communicate()[0]
                     print "output from moviedetails.js: " + output 
                     output = StringIO.StringIO(output)
                     csvreader = csv.reader(output, delimiter=',', quotechar='#')
                     for row in csvreader:
                         if len(row) == 6:
-                            saveMovieDetails(row, movieid)
-                    url = url.replace('/dp/', '/product-reviews/')
-                    processes[i]['ratings'] = startScrapeRatings(url)
-
-                elif processes[i]['ratings'].poll() is not None:
-                    output = processes[i]['ratings'].communicate()[0]
+                            saveMovieDetails(row, processes[i]['movie']['id'])
+                    output = processes[i]['ratings']['process'].communicate()[0]
                     print "output from ratings.js: " + output
                     output = StringIO.StringIO(output)
                     csvreader = csv.reader(output, delimiter=',', quotechar='#')
                     for row in csvreader:
-                        processRating(row, movieid)
-                    processes[i]['movie'] = None
-                    processes[i]['ratings'] = None
-                    getNextMovies()
+                        processRating(row, processes[i]['ratings']['id'])
+
+                    processes[i]['movie']['process'] = None
+                    processes[i]['ratings']['process'] = None
+                    processes[i]['movie']['id'] = None
+                    processes[i]['movie']['url'] = None
+                    processes[i]['ratings']['id'] = None
+                    processes[i]['ratings']['url'] = None
+
             else:
                 print "process " + str(i) + " is waiting for something to finish"
-
+        getNextMovies()
         time.sleep(60)
 
 
 getNextMovies()
 
 for i in range(concurrent):
-    processes.append({'movie':None,'ratings':None})
+    processes.append({'movie':{'process':None,'id':None,'url':None},'ratings':{'process':None,'id':None,'url':None}})
 
 thread.start_new_thread(mainThread, ())
 
