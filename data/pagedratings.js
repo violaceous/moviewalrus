@@ -76,6 +76,7 @@ function getRatings() {
 
 casper.start('www.google.com', function() {
     url = casper.cli.get(0).trim();
+    casper.echo('passed URL is : ' + url);
     filename = './ratings/' + url.split('/')[5] + '.txt';
 });
 
