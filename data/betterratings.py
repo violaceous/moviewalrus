@@ -9,13 +9,15 @@ import os
 import time
 import math
 import threading
+import codecs
 from threading import Thread
 from datetime import datetime
 from py2neo import cypher
 from Queue import Queue
 
-RATINGS_FILE = open("ratings.txt","a")
-DATABASE_ERRORS = open("ratings_database_errors.txt","a")
+# Pretty sure I can delete these - commenting out first to be sure
+#RATINGS_FILE = open("ratings.txt","a",)
+#DATABASE_ERRORS = open("ratings_database_errors.txt","a")
 NUM_THREADS = 5
 
 threads = [None] * NUM_THREADS
@@ -79,6 +81,13 @@ def set_last_updated(movieid):
     tx.append("MATCH (movie:MOVIE {amazon_id: '" + str(movieid) + "'} ) SET movie.last_updated = '" + str(now) + "'")
     movies = tx.commit()
 
+def to_unicode(text):
+    try:
+        text = unicode(text, 'utf-8')
+    except TypeError:
+        pass
+    return text
+
 def run_popen_with_timeout(command_string, timeout, input_data):
     """
     Run a sub-program in subprocess.Popen, pass it the input_data,
@@ -104,8 +113,8 @@ def run_popen_with_timeout(command_string, timeout, input_data):
 def get_movies(q, pause):
     session = cypher.Session("http://localhost:7474")
     tx = session.create_transaction()
-    # tx.append("MATCH (movie:MOVIE) WITH toInt(REPLACE(toString(movie.ratings), ',', '')) as ratings, movie WHERE movie.last_updated IS NULL AND ratings > -1 RETURN movie.amazon_link, movie.amazon_id, ratings ORDER BY ratings DESC LIMIT " + str(NUM_THREADS*50))
-    tx.append("MATCH (movie:MOVIE) WITH toInt(REPLACE(toString(movie.ratings), ',', '')) as ratings, movie WHERE movie.last_updated IS NULL AND ratings > -1 AND 500 > ratings RETURN movie.amazon_link, movie.amazon_id, ratings ORDER BY ratings DESC LIMIT " + str(NUM_THREADS*50))
+    tx.append("MATCH (movie:MOVIE) WITH toInt(REPLACE(toString(movie.ratings), ',', '')) as ratings, movie WHERE movie.last_updated IS NULL AND ratings > -1 RETURN movie.amazon_link, movie.amazon_id, ratings ORDER BY ratings DESC LIMIT " + str(NUM_THREADS*50))
+    # tx.append("MATCH (movie:MOVIE) WITH toInt(REPLACE(toString(movie.ratings), ',', '')) as ratings, movie WHERE movie.last_updated IS NULL AND ratings > -1 AND 250 > ratings RETURN movie.amazon_link, movie.amazon_id, ratings ORDER BY ratings DESC LIMIT " + str(NUM_THREADS*50))
     movies = tx.commit()
     for i in range(NUM_THREADS):
         to_put = []
@@ -132,11 +141,14 @@ def saveUser(userid, nickname, ratings_file, error_file):
         session = cypher.Session("http://localhost:7474")
         tx = session.create_transaction()
         try:
-            ratings_file.write("CREATE (amazon_user:AMAZON_USER {id:'" + userid + "',nickname:'" + nickname + "'})\n")
+            to_write = unicode("CREATE (amazon_user:AMAZON_USER {id:'") + to_unicode(userid) + unicode("',nickname:'") + to_unicode(nickname) + unicode("'})\n") 
+            ratings_file.write(to_write)
+            statement = "CREATE (amazon_user:AMAZON_USER {id:{userid}, nickname:{nickname}})"
+            tx.append(statement, {"userid": userid, "nickname": nickname})
             tx.append("CREATE (amazon_user:AMAZON_USER {id:'" + userid + "',nickname:'" + nickname + "'})")
             tx.commit()
         except cypher.TransactionError as e:
-            error_file.write(e.message + "\n")
+            error_file.write(u" " + e.message + "\n")
 
 def saveRating(userid, movie, stars, date, ratings_file, error_file):
     if userid != 'undefined': 
@@ -144,11 +156,11 @@ def saveRating(userid, movie, stars, date, ratings_file, error_file):
         tx = session.create_transaction()
         try:
             statement = "MATCH (amazon_user:AMAZON_USER { id:{userid}}) MATCH (movie:MOVIE { amazon_id:{movieid}}) CREATE UNIQUE (amazon_user)-[r:RATING {date:{date}, stars:{stars}}]->(movie) RETURN r;\n"
-            ratings_file.write("MATCH (amazon_user:AMAZON_USER { id:'" + userid + "') MATCH (movie:MOVIE { amazon_id:'" + movie + "'}) CREATE UNIQUE (amazon_user)-[r:RATING {date: '" + date + "', stars: '" + stars + "' }]->(movie) RETURN r;") 
+            ratings_file.write(u"MATCH (amazon_user:AMAZON_USER { id:'" + userid + "') MATCH (movie:MOVIE { amazon_id:'" + movie + "'}) CREATE UNIQUE (amazon_user)-[r:RATING {date: '" + date + "', stars: '" + stars + "' }]->(movie) RETURN r;") 
             tx.append(statement, {"userid": userid, "movieid": movie, "date": date, "stars": stars})
             tx.commit()
         except cypher.TransactionError as e:
-            error_file.write(e.message + "\n")
+            error_file.write(u" " + e.message + "\n")
 
 class MovieThread(object): 
     def __init__(self, url, movieid, ratings, pause, i):
@@ -222,9 +234,9 @@ class MovieThread(object):
             print("Stats for " + self.url + " " + str(self.stats) + " at " +  str(datetime.now()))
             time_per_page = ((self.stats.ellapsed_time - self.stats.start_time) * 1000) / self.stats.finished_pages
             time_left = math.floor(time_per_page * ((range_finish - range_start) - self.stats.finished_pages)/60)
-            print str(self._thread_number) + ": " + str(time_per_page) + " average seconds per page and " + str(time_left) + " minutes estimated until completion"
-        ratings_file = open("./ratings/" + self.movieid + ".txt","a")
-        errors_file = open("./ratings/" + self.movieid + "_database_errors.txt","a")
+            print(str(self._thread_number) + ": " + str(time_per_page) + " average seconds per page and " + str(time_left) + " minutes estimated until completion")
+        ratings_file = codecs.open("./ratings/" + self.movieid + ".txt","a", "utf-8-sig")
+        errors_file = codecs.open("./ratings/" + self.movieid + "_database_errors.txt","a", "utf-8-sig")
         write_ratings(queued_ratings, self.movieid, ratings_file, errors_file)
         ratings_file.close()
         errors_file.close()
