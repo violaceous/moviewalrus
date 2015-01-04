@@ -1,0 +1,32 @@
+<!DOCTYPE>
+<html>
+<head>
+    <title>Steal all the datas!!!</title>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
+    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="log"></div>
+    <div id="global">global</div>
+    <div id="popular">popular</div>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function(){
+            if ("WebSocket" in window) {
+              var ws = new WebSocket("ws://localhost:8888/realtime/");
+              ws.onopen = function() {};
+              ws.onmessage = function (evt) {
+                  var received_msg = evt.data;
+		console.log(received_msg.name);
+                  var html = $("#log").html();
+                  html += "<p>"+received_msg+"</p>";
+                  $("#log").html(html);
+              };
+              ws.onclose = function() {};
+            } else {
+              alert("WebSocket not supported");
+            }
+        });
+    </script>
+</body>
+</html>

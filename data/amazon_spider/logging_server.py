@@ -5,37 +5,7 @@ import tornado.websocket
 import tornado.ioloop
 import tornado.web
 import redis
- 
-TEMPLATE = """
-<!DOCTYPE>
-<html>
-<head>
-    <title>Steal all the datas!!!</title>
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
-    <link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.5.0/pure-min.css">
-</head>
-<body>
-    <div id="log"></div>
-    <script type="text/javascript" charset="utf-8">
-        $(document).ready(function(){
-            if ("WebSocket" in window) {
-              var ws = new WebSocket("ws://localhost:8888/realtime/");
-              ws.onopen = function() {};
-              ws.onmessage = function (evt) {
-                  var received_msg = evt.data;
-                  var html = $("#log").html();
-                  html += "<p>"+received_msg+"</p>";
-                  $("#log").html(html);
-              };
-              ws.onclose = function() {};
-            } else {
-              alert("WebSocket not supported");
-            }
-        });
-    </script>
-</body>
-</html>
-"""
+import os.path 
  
 LISTENERS = []
  
@@ -51,7 +21,7 @@ def redis_listener():
  
 class NewMsgHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write(TEMPLATE)
+        self.render("index.html")
  
     def post(self):
         data = self.get_argument('data')
@@ -73,15 +43,30 @@ class RealtimeHandler(tornado.websocket.WebSocketHandler):
 settings = {
     'auto_reload': True,
 }
- 
+
+""" 
 application = tornado.web.Application([
     (r'/', NewMsgHandler),
     (r'/realtime/', RealtimeHandler),
-], **settings)
- 
+], settings = dict(template_path=os.path.join(os.path.dirname(__file__), "tornado_templates")), debug=True)
+""" 
+
+class Application(tornado.web.Application):
+    def __init__(self):
+        handlers = [
+            (r'/', NewMsgHandler),
+            (r'/realtime/',RealtimeHandler),
+            ]
+	settings = dict(
+            template_path=os.path.join(os.path.dirname(__file__), "tornado_files/templates"),
+            static_path=os.path.join(os.path.dirname(__file__), "tornado_files/static"),
+            debug=True,
+            autoescape=None
+        )
+        tornado.web.Application.__init__(self, handlers, **settings)
  
 if __name__ == "__main__":
     threading.Thread(target=redis_listener).start()
-    http_server = tornado.httpserver.HTTPServer(application)
+    http_server = tornado.httpserver.HTTPServer(Application())
     http_server.listen(8888)
     tornado.ioloop.IOLoop.instance().start()

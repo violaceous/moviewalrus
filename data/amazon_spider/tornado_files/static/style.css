@@ -1,0 +1,23 @@
+#popular_scrape {
+	background: lavender;
+	border-style: solid;
+	border-color: purple;
+	margin: 10px;
+	padding: 10px;
+}
+
+#recent_scrape {
+	background: lavender;
+	border-style: solid;
+	border-color: purple;
+	margin: 10px;
+	padding: 10px;
+}
+
+#global_stats {
+	background: lavender;
+	border-style: solid;
+	border-color: purple;
+	margin: 10px;
+	padding: 10px;
+}
