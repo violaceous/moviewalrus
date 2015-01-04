@@ -19,11 +19,20 @@
               ws.onmessage = function (evt) {
                   var received_msg = $.parseJSON(evt.data);
                   var html = "";
+		  console.log(received_msg);
+	var currentdate = new Date(); 
+	var datetime = "Last Sync: " + currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/" 
+                + currentdate.getFullYear() + " @ "  
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
 		  for(var key in received_msg) {
 		      if(received_msg.hasOwnProperty(key)) {
 		            html += key.replace(/_/g, ' ') + ': <b>' + received_msg[key] + '</b><br>';
 		      }
 		  }
+		  html += '<i>' + datetime + '</i><br>'
                   $("#" + received_msg.name).html(html);
               };
               ws.onclose = function() {};

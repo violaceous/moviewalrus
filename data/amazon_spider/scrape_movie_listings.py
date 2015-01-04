@@ -110,6 +110,8 @@ def scrape_popular_movies():
     popular_scrape['total_restarts'] = 0
     popular_scrape['remaining_pages'] = 400
     popular_scrape['time_per_page'] = 0
+    popular_scrape['thread_status'] = 'Just starting'
+    r = redis.Redis()
 
     for i in range(1, 400):
         popular_scrape['last_thread_start'] = time.clock()
@@ -119,7 +121,11 @@ def scrape_popular_movies():
         success = False
         valid_result = False
         while not success and not valid_result:
+            popular_scrape['thread_status'] = 'about to run external command'
+            r.publish('amazon_spider', json.dumps(popular_scrape, ensure_ascii=False))
             success, output, error, restarts = run_popen_with_timeout(command_string, 60, '')
+            popular_scrape['thread_status'] = 'returned from running external command'
+            r.publish('amazon_spider', json.dumps(popular_scrape, ensure_ascii=False))
             output = StringIO.StringIO(output)
             csvreader = csv.reader(output, delimiter=',', quotechar='#')
             for row in csvreader:
@@ -132,7 +138,6 @@ def scrape_popular_movies():
             popular_scrape['total_restarts'] = popular_scrape['total_restarts'] + restarts
         time.sleep(15)
         
-        r = redis.Redis()
         update_global_stats()
         popular_scrape['last_thread_time'] = (time.clock() - popular_scrape['last_thread_start']) *1000 
         popular_scrape['remaining_pages'] = popular_scrape['remaining_pages'] - 1
@@ -151,6 +156,8 @@ def scrape_recent_movies():
     popular_scrape['total_restarts'] = 0
     popular_scrape['remaining_pages'] = 400
     popular_scrape['time_per_page'] = 0
+    popular_scrape['thread_status'] = 'just_starting'
+    r = redis.Redis()
 
     for i in range(1, 400):
         popular_scrape['last_thread_start'] = time.clock()
@@ -160,7 +167,11 @@ def scrape_recent_movies():
         success = False
         valid_result = False
         while not success and not valid_result:
+            popular_scrape['thread_status'] = 'about to run external command'
+            r.publish('amazon_spider', json.dumps(popular_scrape, ensure_ascii=False))
             success, output, error, restarts = run_popen_with_timeout(command_string, 60, '')
+            popular_scrape['thread_status'] = 'returned from running external command'
+            r.publish('amazon_spider', json.dumps(popular_scrape, ensure_ascii=False))
             output = StringIO.StringIO(output)
             csvreader = csv.reader(output, delimiter=',', quotechar='#')
             for row in csvreader:
@@ -173,7 +184,6 @@ def scrape_recent_movies():
             popular_scrape['total_restarts'] = popular_scrape['total_restarts'] + restarts
         time.sleep(15)
         
-        r = redis.Redis()
         update_global_stats()
         popular_scrape['last_thread_time'] = (time.clock() - popular_scrape['last_thread_start']) *1000 
         popular_scrape['remaining_pages'] = popular_scrape['remaining_pages'] - 1
